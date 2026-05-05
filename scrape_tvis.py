@@ -1,9 +1,10 @@
 """
-TVIS MCH Director Scraper
+TVIS Contact Scraper
 Fetches all state/territory contacts from mchb.tvisdata.hrsa.gov
-and writes two CSVs:
-  - data/tvis_mch_directors.csv   (Type 1 - MCH Directors only)
-  - data/tvis_all_contacts.csv    (all contact types)
+and writes three CSVs:
+  - data/tvis_mch_directors.csv     (Type 1 - MCH Directors only)
+  - data/tvis_cyshcn_directors.csv  (Type 2 - CYSHCN Directors only)
+  - data/tvis_all_contacts.csv      (all contact types)
 """
 
 import csv
@@ -23,6 +24,11 @@ TYPE_MAP = {
 }
 
 MCH_DIRECTOR_FIELDS = [
+    "StateDisplayName", "State", "Name", "Title",
+    "Email", "Telephone", "Address", "RoomNumber", "City", "Zipcode",
+]
+
+CYSHCN_DIRECTOR_FIELDS = [
     "StateDisplayName", "State", "Name", "Title",
     "Email", "Telephone", "Address", "RoomNumber", "City", "Zipcode",
 ]
@@ -79,14 +85,18 @@ def main():
     all_contacts = parse_contacts(result)
 
     mch_directors = [c for c in all_contacts if c["Type"] == 1]
+    cyshcn_directors = [c for c in all_contacts if c["Type"] == 2]
     mch_directors.sort(key=lambda c: c["StateDisplayName"])
+    cyshcn_directors.sort(key=lambda c: c["StateDisplayName"])
     all_contacts.sort(key=lambda c: (c["StateDisplayName"], c["Order"]))
 
     write_csv("data/tvis_mch_directors.csv", MCH_DIRECTOR_FIELDS, mch_directors)
+    write_csv("data/tvis_cyshcn_directors.csv", CYSHCN_DIRECTOR_FIELDS, cyshcn_directors)
     write_csv("data/tvis_all_contacts.csv", ALL_CONTACT_FIELDS, all_contacts)
 
     print(f"✓ {len(result)} states/territories")
     print(f"✓ {len(mch_directors)} MCH Directors → data/tvis_mch_directors.csv")
+    print(f"✓ {len(cyshcn_directors)} CYSHCN Directors → data/tvis_cyshcn_directors.csv")
     print(f"✓ {len(all_contacts)} total contacts → data/tvis_all_contacts.csv")
 
 
@@ -96,4 +106,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
-
